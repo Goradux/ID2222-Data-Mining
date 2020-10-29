@@ -2,7 +2,7 @@ class Shingling():
 
     shingles = []
 
-    def k_shingle(self, text: str, k: int) -> list:
+    def k_shingle(self, text, k: int) -> list:
         import string
         import hashlib
 
@@ -31,13 +31,13 @@ class CompareSets():
 
     jaccard_similarity = -1
 
-    def compare(self, set1: Shingling, set2: Shingling) -> int:
-        intersection = len(list(set(set1.shingles).intersection(set2.shingles)))
-        union = len(list(dict.fromkeys(set(set1.shingles + set2.shingles))))
+    def compare(self, set1: list, set2: list) -> float:
+        intersection = len(list(set(set1).intersection(set2)))
+        union = len(list(dict.fromkeys(set(set1 + set2))))
         jaccard_similarity =  intersection / union
         return jaccard_similarity
 
-    def __init__(self, set1: Shingling, set2: Shingling) -> None:
+    def __init__(self, set1: list, set2: list) -> None:
         self.jaccard_similarity = self.compare(set1, set2)
 
 
@@ -47,14 +47,42 @@ class MinHashing():
     length n from a given set of integers (a set of hashed shingles).
     """
 
-    singature = None
+    signature = None
 
-    def get_signature(self):
-        pass
+    def get_signature(self, n, shingles):
+        import hashlib
+
+        def hashWith(alg, i):
+            return int(hashlib.new(alg, str(i).encode('UTF-8')).hexdigest(), 16)
+
+        algorithms = ['sha3_224', 'sha3_256', 'sha1', 'sha512', 'sha3_384',
+          'sha3_512', 'sha256', 'md5', 'sha224', 'blake2b', 'blake2s', 'sha384']
+        print(len(algorithms))
+        
+        # iterate over hash functions and compute h_min(s) for the set.
+        signature = [min(hashWith(alg, i) for i in shingles) for alg in algorithms[0:n]]
+        print(len(signature))
+        return signature
 
     def __init__(self, n: int, shingles) -> None:
-        self.singature = self.get_signature()
+        self.signature = self.get_signature(n, shingles)
 
+
+class CompareSignatures():
+    """
+    A class CompareSignatures that estimates similarity of two integer vectors –
+    minhash signatures – as a fraction of components, in which they agree.
+    """
+    jaccard_similarity = -1
+
+    def compare(self, set1: list, set2: list) -> float:
+        intersection = len(list(set(set1).intersection(set2)))
+        union = len(list(dict.fromkeys(set(set1 + set2))))
+        jaccard_similarity =  intersection / union
+        return jaccard_similarity
+
+    def __init__(self, set1: list, set2: list) -> None:
+        self.jaccard_similarity = self.compare(set1, set2)
 
 
 def main():    
@@ -69,6 +97,19 @@ def main():
     print('Testing CompareSets')
     s1 = Shingling('1 2 3 4 5 6 7', 3)
     s2 = Shingling('3 4 5 6 7 8 9', 3)
-    c = CompareSets(s1, s2)
+    c = CompareSets(s1.shingles, s2.shingles)
+    print(c.jaccard_similarity)
+    print()
+
+    # print('Testing MinHashing')
+    # # n can be between 1 and 12
+    # mh = MinHashing(10, x.shingles)
+    # print(mh.signature)
+    # print()
+
+    print('Testing ComparingSignatures')
+    s1 = Shingling('1 2 3 4 5 6 7', 3)
+    s2 = Shingling('3 4 5 6 7 8 9', 3)
+    c = CompareSignatures(s1.shingles, s2.shingles)
     print(c.jaccard_similarity)
 main()
