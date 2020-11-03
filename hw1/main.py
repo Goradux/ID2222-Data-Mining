@@ -18,7 +18,9 @@ class Shingling():
             # bytes_shingle = bytes(shingle, encoding='utf-8')
             # hashed = hashlib.md5(bytes_shingle).hexdigest()
             # shingles.append(hashed)
-            shingles.append(int(hashlib.sha1(shingle.encode('utf-8')).hexdigest(), 16) % (10 ** 8))
+            # shingles.append(int(hashlib.sha1(shingle.encode('utf-8')).hexdigest(), 16) % (10 ** 8))
+            # shingles.append(int(hashlib.sha1(shingle.encode('utf-8')).hexdigest(), 16))
+            shingles.append(hash(shingle))
 
         return list(dict.fromkeys(shingles))
     
@@ -35,10 +37,24 @@ class CompareSets():
         intersection = len(list(set(set1).intersection(set2)))
         union = len(list(dict.fromkeys(set(set1 + set2))))
         jaccard_similarity =  intersection / union
-        return jaccard_similarity
+        return round(jaccard_similarity, 3)
 
     def __init__(self, set1: list, set2: list) -> None:
         self.jaccard_similarity = self.compare(set1, set2)
+
+
+def generate_random_coefficients(k):
+    import random
+    # 2^32 can be the max id
+    max_shingle_id = 2**32 - 1
+    rand_list = []
+    while k > 0:
+        rand_index = random.randint(0, max_shingle_id)
+        while rand_index in rand_list:
+            rand_index = random.randint(0, max_shingle_id)
+        rand_list.append(rand_index)
+        k -= 1
+    return rand_list
 
 
 class MinHashing():
@@ -49,23 +65,32 @@ class MinHashing():
 
     signature = None
 
-    def get_signature(self, n, shingles):
-        import hashlib
+    def get_signature2(self, n, shingles, a: list, b: list):
+        # c constant should be a prime greater than max_shingle_id so no collisions occur
+        big_prime = 4294967311
 
-        def hashWith(alg, i):
-            return int(hashlib.new(alg, str(i).encode('UTF-8')).hexdigest(), 16)
-
-        algorithms = ['sha3_224', 'sha3_256', 'sha1', 'sha512', 'sha3_384',
-          'sha3_512', 'sha256', 'md5', 'sha224', 'blake2b', 'blake2s', 'sha384']
-        print(len(algorithms))
+        # hash function h(x) = (a*x + b) % c like in the book
         
-        # iterate over hash functions and compute h_min(s) for the set.
-        signature = [min(hashWith(alg, i) for i in shingles) for alg in algorithms[0:n]]
-        print(len(signature))
+        # the result (should be returned)
+        signature = []
+
+        for i in range(0, n):
+            min_hash_code = big_prime + 1
+
+            for shingle in shingles:
+                hash_code = (a[i] * shingle + b[i]) % big_prime
+            
+                if hash_code < min_hash_code:
+                    min_hash_code = hash_code
+            
+            signature.append(min_hash_code)
+
         return signature
 
-    def __init__(self, n: int, shingles) -> None:
-        self.signature = self.get_signature(n, shingles)
+
+    def __init__(self, n: int, shingles, a: list, b: list) -> None:
+        # self.signature = self.get_signature(n, shingles)
+        self.signature = self.get_signature2(n, shingles, a, b)
 
 
 class CompareSignatures():
@@ -73,43 +98,51 @@ class CompareSignatures():
     A class CompareSignatures that estimates similarity of two integer vectors –
     minhash signatures – as a fraction of components, in which they agree.
     """
-    jaccard_similarity = -1
+    estimation = -1
 
-    def compare(self, set1: list, set2: list) -> float:
-        intersection = len(list(set(set1).intersection(set2)))
-        union = len(list(dict.fromkeys(set(set1 + set2))))
-        jaccard_similarity =  intersection / union
-        return jaccard_similarity
+    def compare(self, set1: list, set2: list, n) -> float:
+        count = 0
+        # count the number of positions in the minhash signature which are equal.
 
-    def __init__(self, set1: list, set2: list) -> None:
-        self.jaccard_similarity = self.compare(set1, set2)
+        for k in range(0, n):
+            count = count + (set1[k] == set2[k])
+
+        return count/n
+
+    def __init__(self, set1: list, set2: list, n: int) -> None:
+        self.estimation = self.compare(set1, set2, n)
 
 
 def main():    
-    print('Testing Shingling')
-    x = Shingling('Hey, I got this stupid text that I wrote!', 5)
-    print(x.shingles)
-    print()
-
     # hashing tutorial: https://www.pythoncentral.io/hashing-strings-with-python/
     # https://stackoverflow.com/questions/16008670/how-to-hash-a-string-into-8-digits
 
-    print('Testing CompareSets')
-    s1 = Shingling('1 2 3 4 5 6 7', 3)
-    s2 = Shingling('3 4 5 6 7 8 9', 3)
-    c = CompareSets(s1.shingles, s2.shingles)
-    print(c.jaccard_similarity)
+    print('Testing Shingling')
+    num_words = 50
+    k_shingle = 4
+    s1 = Shingling(' '.join([str(i) for i in range(num_words)]), k_shingle)
+    s2 = Shingling(' '.join([str(round(i+num_words/2)) for i in range(num_words)]), k_shingle)
+    # print(s1.shingles)
+    # print(s2.shingles)
+    print('Amount of shingles in s1 and s2:', len(s1.shingles))
     print()
 
-    # print('Testing MinHashing')
-    # # n can be between 1 and 12
-    # mh = MinHashing(10, x.shingles)
-    # print(mh.signature)
-    # print()
+    print('Testing CompareSets')
+    c = CompareSets(s1.shingles, s2.shingles)
+    print('Jaccard similarity:', c.jaccard_similarity)
+    print()
+
+    print('Testing MinHashing')
+    n = 20                                          # number of hash functions
+    a = generate_random_coefficients(n)             # init coeff for hash funcs
+    b = generate_random_coefficients(n)
+    mh1 = MinHashing(n, s1.shingles, a, b)
+    mh2 = MinHashing(n, s2.shingles, a, b)
+    print(mh1.signature)
+    print(mh2.signature)
+    print()
 
     print('Testing ComparingSignatures')
-    s1 = Shingling('1 2 3 4 5 6 7', 3)
-    s2 = Shingling('3 4 5 6 7 8 9', 3)
-    c = CompareSignatures(s1.shingles, s2.shingles)
-    print(c.jaccard_similarity)
+    c = CompareSignatures(mh1.signature, mh2.signature, n)
+    print('Jaccard similarity estimation:', c.estimation)
 main()
