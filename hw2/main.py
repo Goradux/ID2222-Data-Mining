@@ -1,3 +1,7 @@
+import itertools
+import time
+
+
 def read_baskets():
     baskets = []
     with open('T10I4D100K.dat') as f:
@@ -20,7 +24,7 @@ def count_singletons(baskets):
 
 
 def filter_frequent_items(items_count, support):
-    return [item for item in items_count if items_count[item] >= support]
+    return {item: items_count[item] for item in items_count if items_count[item] >= support}
 
 
 def generate_candidates(items, singletons):
@@ -51,45 +55,59 @@ def generate_candidates(items, singletons):
 # FAST IMPLEMENTATION: Generate all possible basket items combinations and check if they exist in candidates
 def count_candidates(baskets, candidates, candidate_length):
     for basket in baskets:
-        basket_variations = generate_basket_item_combinations(basket, candidate_length)
+        basket_variations = itertools.combinations(basket, candidate_length)
         for combination in basket_variations:
             if combination in candidates:
                 candidates[combination] += 1
     return candidates
 
 
-def generate_basket_item_combinations(basket, length):
-    if length == 1:
-        return [(i,) for i in basket]
-    combinations = []
-    for i in range(len(basket)):
-        for j in generate_basket_item_combinations(basket[i + 1:], length - 1):
-            combinations.append((basket[i],) + j)
-    return combinations
+def conf(k_tuple, arrow_position, frequent_itemsets):
+    before_arrow = k_tuple[:arrow_position]
+    union_support = get_support(k_tuple, frequent_itemsets)
+    single_support = get_support(before_arrow, frequent_itemsets)
+    return union_support / single_support
 
+
+def get_support(k_tuple, frequent_itemsets):
+    return frequent_itemsets[len(k_tuple) - 1][tuple(sorted(k_tuple))]
 
 
 def main():
     support = 1000
+    confidence = 0.5
     frequent_itemsets = []  # Results
+    associations = set()
 
-    baskets = read_baskets()                                                # Read data file
-    singletons_count = count_singletons(baskets)                            # Find and count singletons
-    frequent_singletons = filter_frequent_items(singletons_count, support)  # Filter frequent singletons
-    frequent_itemsets.append([(i,) for i in frequent_singletons])            # Wrap singletons in tuple to use the same data structure for pairs, triplets, etc..
+    baskets = read_baskets()                                                 # Read data file
+    singletons_count = count_singletons(baskets)                             # Find and count singletons
+    filtered_items = filter_frequent_items(singletons_count, support)        # Filter frequent singletons
+    frequent_singletons = {(i,): filtered_items[i] for i in filtered_items} # Wrap singletons in tuple to use the same data structure for pairs, triplets, etc..
+    frequent_itemsets.append(frequent_singletons)
     print("Frequent singletons:", frequent_singletons)
 
     k = 1
-    while len(frequent_itemsets[k - 1]) > 0:    # While new frequent elements are found
-        candidates = generate_candidates(frequent_itemsets[k - 1], frequent_itemsets[0])     # Generate candidates from previous frequent itemset and singletons
-        candidates_count = count_candidates(baskets, candidates, k + 1) # Count candidates frequency
-        frequent_itemset = filter_frequent_items(candidates_count, support)                  # Filter frequent items
+    while len(frequent_itemsets[k - 1]) > 0:                                                # While new frequent elements are found
+        candidates = generate_candidates(frequent_itemsets[k - 1], frequent_itemsets[0])    # Generate candidates from previous frequent itemset and singletons
+        candidates_count = count_candidates(baskets, candidates, k + 1)                     # Count candidates frequency
+        frequent_itemset = filter_frequent_items(candidates_count, support)                 # Filter frequent items
         frequent_itemsets.append(frequent_itemset)
         print("Frequent " + str(k + 1) + "-tuples:", frequent_itemsets[k])
         k += 1
 
+    for frequent_itemset in frequent_itemsets[1:]:
+        for k_tuple in frequent_itemset:
+            for tuple_permutation in itertools.permutations(k_tuple, len(k_tuple)):
+                for arrow_position in reversed(range(1, len(tuple_permutation))): # arrow_position = 1 means: A -> B,C,D. arrow_position = 2 means: A,B -> C,D etc..
+                    c = conf(tuple_permutation, arrow_position, frequent_itemsets)
+                    if c >= confidence:
+                        associations.add((', '.join(map(str, sorted(tuple_permutation[:arrow_position]))) + ' -> ' + ', '.join(map(str, sorted(tuple_permutation[arrow_position:]))), c))
+                    else:
+                        break # Known rule: If A,B,C -> D is below confidence so that A,B -> C,D. So no need to iterate over arrow positions futher
 
-import time
+    print("Associations:", associations)
+
+
 start_time = time.time()
 main()
 print("--- %s seconds ---" % (time.time() - start_time))
