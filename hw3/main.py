@@ -48,23 +48,21 @@ class TRIEST_base:
                 s2.add(element.to)
             if element.to == edge.to:
                 s2.add(element.frm)
-        # c is the overlap between s1 and s2
-        for c in (s1 & s2):
+        # vertex is the overlap between s1 and s2
+        for vertex in (s1 & s2):
             if operation == 'add':
                 self.tau += 1
-                self.counters[c] = self.counters.get(c, 0) + 1
+                self.counters[vertex] = self.counters.get(vertex, 0) + 1
                 self.counters[edge.frm] = self.counters.get(edge.frm, 0) + 1
                 self.counters[edge.to] = self.counters.get(edge.to, 0) + 1
             elif operation == 'remove':
                 self.tau -= 1
-                self.counters[c] = self.counters.get(c, 0) - 1
+                self.counters[vertex] = self.counters.get(vertex, 0) - 1
                 self.counters[edge.frm] = self.counters.get(edge.frm, 0) - 1
                 self.counters[edge.to] = self.counters.get(edge.to, 0) - 1
-                if self.counters[c] <= 0:
-                    del self.counters[c]
-                if self.counters[edge.frm] <= 0:
+                if self.counters[vertex] <= 0:
+                    del self.counters[vertex]
                     del self.counters[edge.frm]
-                if self.counters[edge.to] <= 0:
                     del self.counters[edge.to]
 
 
