@@ -130,9 +130,9 @@ class TRIEST_improved:
         return self.tau
 
 
+################################################################################
 test_set = set()
 with open('data_basic.txt') as f:
-# with open('data.txt') as f:
     for line in f:
         content = line.split()
         # get rid of duplicates
@@ -140,7 +140,6 @@ with open('data_basic.txt') as f:
             test_set.add(Edge(content[0], content[1]))
 
 
-################################################################################
 # TRIEST base
 print('Testing TRIEST base:')
 sample_size = 1000
@@ -227,3 +226,23 @@ plt.ylabel('Time (seconds)')
 plt.xticks(sizes)
 plt.grid(True)
 plt.savefig('improved_times.png')
+
+
+################################################################################
+# TRIEST base big dataset
+test_set = set()
+with open('data_a_lot.txt') as f:
+    for line in f:
+        content = line.split()
+        if content[0] != content[1]:
+            test_set.add(Edge(content[0], content[1]))
+
+print('Testing TRIEST base:')
+sample_size = 3000
+print('test_set length:', len(test_set))
+expected = TRIEST_base(sample_size).algo_start(test_set)
+print('Expected value:', expected)
+
+# for the big dataset the results were accurate starting at 3000 (out of 90000)
+# the estimate was around 1.7 million triangles
+# tested: 1k, 3k, 5k, 10k
