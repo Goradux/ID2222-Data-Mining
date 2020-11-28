@@ -4,12 +4,15 @@ import networkx as nx
 from sklearn.cluster import KMeans
 
 k = 4
+filename = "example1.dat"
 
 # Read the data
-graph_unsorted = nx.read_edgelist("example1.dat", delimiter=",", nodetype=int, data=(("weight", int), ))
+graph_unsorted = nx.read_edgelist(filename, delimiter=",", nodetype=int, data=(("weight", int), ))
 graph = nx.Graph()
 graph.add_nodes_from(sorted(graph_unsorted.nodes.keys()))
 graph.add_edges_from(graph_unsorted.edges)
+
+nx.draw(graph, node_size=10)
 
 # 1. Form the affinity matrix
 A = np.zeros([graph.number_of_nodes(), graph.number_of_nodes()])
@@ -35,5 +38,6 @@ for i in range(k):
 # 5. Apply k-means cluster
 labels = KMeans(n_clusters=k).fit(Y).labels_
 
+plt.figure()
 nx.draw(graph, node_size=10, node_color=labels)
 plt.show()
