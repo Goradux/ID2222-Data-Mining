@@ -27,7 +27,6 @@ public class Jabeja {
     this.round = 0;
     this.numberOfSwaps = 0;
     this.config = config;
-    this.T = config.getTemperature();
   }
 
 
@@ -107,7 +106,7 @@ public class Jabeja {
 
         double newd = Math.pow(dpq, config.getAlpha()) + Math.pow(dqp, config.getAlpha());
 
-        if ((newd * config.getTemperature() > old) && (newd > highestBenefit)) {
+        if ((newd * T > old) && (newd > highestBenefit)) {
           bestPartner = nodeq;
           highestBenefit = newd;
         }
