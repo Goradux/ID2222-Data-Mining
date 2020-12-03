@@ -49,6 +49,9 @@ public class Jabeja {
    * Simulated analealing cooling function
    */
   private void saCoolDown(){
+    if (round % 400 == 0) {
+      this.T = config.getTemperature();
+    }
     T *= config.getDelta();
   }
 
