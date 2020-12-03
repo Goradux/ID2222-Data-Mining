@@ -49,10 +49,10 @@ public class Jabeja {
    * Simulated analealing cooling function
    */
   private void saCoolDown(){
-    if (round % 400 == 0) {
+    if (round % 200 == 0) {
       this.T = config.getTemperature();
     }
-    T *= config.getDelta();
+    T *= config.getDelta() * T;
   }
 
   /**
@@ -104,7 +104,7 @@ public class Jabeja {
 
         double newd = Math.pow(dpq, config.getAlpha()) + Math.pow(dqp, config.getAlpha());
 
-        double ap = Math.pow(Math.E, ((newd - old) / T));
+        double ap = Math.pow(Math.E, ((newd - old) / T)) - Math.E;
         if (ap > Math.random() && newd > highestBenefit) {
           bestPartner = nodeq;
           highestBenefit = newd;
