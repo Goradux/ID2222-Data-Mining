@@ -49,8 +49,7 @@ public class Jabeja {
    * Simulated analealing cooling function
    */
   private void saCoolDown(){
-    // TODO for second task
-    T *= (1 - config.getDelta());
+    T *= config.getDelta();
   }
 
   /**
@@ -89,9 +88,6 @@ public class Jabeja {
 
     Node bestPartner = null;
     double highestBenefit = 0;
-    double highestAp = 0;
-
-    // TODO
 
     for (Integer node : nodes) {
         Node nodeq = entireGraph.get(node);
@@ -105,14 +101,13 @@ public class Jabeja {
 
         double newd = Math.pow(dpq, config.getAlpha()) + Math.pow(dqp, config.getAlpha());
 
-        double ap = Math.pow(Math.E, ((newd - highestBenefit) / T));
-        if (ap > Math.random()){
+        double ap = Math.pow(Math.E, ((newd - old) / T));
+        if (ap > Math.random() && newd > highestBenefit) {
           bestPartner = nodeq;
           highestBenefit = newd;
         }
     }
 
-    //System.out.println("" + highestAp);
     return bestPartner;
   }
 

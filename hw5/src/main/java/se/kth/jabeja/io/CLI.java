@@ -20,7 +20,7 @@ public class CLI {
   private boolean HELP = false;
 
   @Option(name = "-rounds", usage = "Number of rounds.")
-  private int ROUNDS = 10000;
+  private int ROUNDS = 1000;
 
   @Option(name = "-numPartitions", usage = "Number of partitions.")
   private int NUM_PARTITIONS = 4;
@@ -32,7 +32,7 @@ public class CLI {
   private float TEMPERATURE = 1;
 
   @Option(name = "-delta", usage = "Simulated annealing delta.")
-  private float DELTA = (float) 0.01;
+  private float DELTA = (float) 0.99;
 
   @Option(name = "-seed", usage = "Seed.")
   private int SEED = 0;
@@ -52,7 +52,7 @@ public class CLI {
   private NodeSelectionPolicy nodeSelectionPolicy = NodeSelectionPolicy.HYBRID;
 
   @Option(name = "-graph", usage = "Location of the input graph.")
-  private static String GRAPH = "./graphs/3elt.graph";
+  private static String GRAPH = "./graphs/add20.graph";
 
   @Option(name = "-outputDir", usage = "Location of the output file(s)")
   private static String OUTPUT_DIR = "./output";
